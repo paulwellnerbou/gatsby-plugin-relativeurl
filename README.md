@@ -1,14 +1,10 @@
 # gatsby-plugin-relativeurl
 
 [npm-url]:https://npmjs.org/package/gatsby-plugin-relativeurl
-[npm-image]:https://img.shields.io/npm/v/gatsby-plugin-relativeurl.svg
-[downloads-image]:https://img.shields.io/npm/dm/gatsby-plugin-relativeurl.svg
-[david-dm-url]:https://david-dm.org/moxystudio/gatsby-plugin-relativeurl
-[david-dm-image]:https://img.shields.io/david/moxystudio/gatsby-plugin-relativeurl.svg
-[david-dm-dev-url]:https://david-dm.org/moxystudio/gatsby-plugin-relativeurl?type=dev
-[david-dm-dev-image]:https://img.shields.io/david/dev/moxystudio/gatsby-plugin-relativeurl.svg
 
-Adds support for deploying [Gatsby](https://www.gatsbyjs.com/) websites to subdirectories by ensuring that assets are relative.
+Updates [Gatsby](https://www.gatsbyjs.org/) generated URLs to be relative, suitable for using `file:///` based paths or deploying to [IPFS](https://ipfs.io/).  This is an extension of the exceedingly clever [gatsby-plugin-ipfs](https://github.com/moxystudio/gatsby-plugin-ipfs) by [André Cruz](https://github.com/moxystudio).
+
+This plugin adds support for literal paths, adding `index.html`, since browsers cannot handle an implicit `index.html` in `file:///` URLs that point to directories.
 
 
 ## Installation
