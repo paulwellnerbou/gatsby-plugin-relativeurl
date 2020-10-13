@@ -9,7 +9,7 @@
     "ipns",
     "relative"
   ],
-  "author": "André Cruz <andre@moxy.studio>",
+  "author": "André Cruz <andre@moxy.studio>, Edward Thomson (https://github.com/ethomson), Paul Wellner Bou <paul@wellnerbou.de>",
   "homepage": "https://github.com/moxystudio/gatsby-pljugin-ipfs",
   "repository": {
     "type": "git",
