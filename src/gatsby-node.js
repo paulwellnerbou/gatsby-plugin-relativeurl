@@ -1,42 +1,38 @@
 'use strict';
 
 const fs = require('fs');
-const path = require('path');
 const util = require('util');
 const pMap = require('p-map');
 const globby = require('globby');
 const isTextPath = require('is-text-path');
 const readFileAsync = util.promisify(fs.readFile);
 const writeFileAsync = util.promisify(fs.writeFile);
-
 const TRANSFORM_CONCURRENCY = 10;
-
 const getRelativePrefix = (path) => {
     const depth = path.split('/').length - 2;
     const relativePrefix = depth > 0 ? '../'.repeat(depth) : './';
 
     return relativePrefix;
 };
-
 const generateHtmlUrls = (paths) => {
     // Given a set of on-disk file paths, generate URLs that can be used
     // for file:/// urls (ie, have a trailing `index.html`).
-    const map = { };
+    const map = {};
 
-    for (let path of paths) {
+    for (const path of paths) {
         const match = path.match(/^public\/(?:(.*)(?:\/))?index\.html$/);
 
         if (match) {
             const url = match[1] || '';
-            const urlWithSeparator = match[1] ? match[1] + '/' : '';
-            map[url] = urlWithSeparator + 'index.html';
-            map[url + '/'] = urlWithSeparator + 'index.html';
+            const urlWithSeparator = match[1] ? `${match[1]}/` : '';
+
+            map[url] = `${urlWithSeparator}index.html`;
+            map[`${url}/`] = `${urlWithSeparator}index.html`;
         }
     }
 
     return map;
 };
-
 const relativizeHtmlFiles = async () => {
     // Replaces all /__GATSBY_RELATIVEURL_PATH_PREFIX__/ strings with the correct relative paths
     // based on the depth of the file within the `public/` folder
@@ -51,16 +47,17 @@ const relativizeHtmlFiles = async () => {
         if (!contents.includes('__GATSBY_RELATIVEURL_PATH_PREFIX__')) {
             return;
         }
-
         contents = contents.replace(/\/__GATSBY_RELATIVEURL_PATH_PREFIX__\/([/a-zA-Z0-9_\-\.\+:;=%]*)/g, (prefixed, child) => {
             const relativePrefix = getRelativePrefix(path);
             const url = urls[child] || child;
+
             return relativePrefix + url;
         });
         await writeFileAsync(path, contents);
-    }, { concurrency: TRANSFORM_CONCURRENCY });
+    }, {
+        concurrency: TRANSFORM_CONCURRENCY,
+    });
 };
-
 const relativizeJsFiles = async () => {
     // Replaces all "/__GATSBY_RELATIVEURL_PATH_PREFIX__" strings __GATSBY_RELATIVEURL_PATH_PREFIX__
     // Replaces all "/__GATSBY_RELATIVEURL_PATH_PREFIX__/" strings with __GATSBY_RELATIVEURL_PATH_PREFIX__ + "/"
@@ -79,32 +76,30 @@ const relativizeJsFiles = async () => {
 
         // DO NOT remove the extra spaces, otherwise the code will be invalid when minified,
         // e.g.: return"__GATSBY_RELATIVEURL_PATH_PREFIX__/static/..." -> return __GATSBY_RELATIVEURL_PATH_PREFIX + "/static/..."
-        contents = contents
-        .replace(/["']\/__GATSBY_RELATIVEURL_PATH_PREFIX__['"]/g, () => ' __GATSBY_RELATIVEURL_PATH_PREFIX__ ')
+        contents = contents.replace(/["']\/__GATSBY_RELATIVEURL_PATH_PREFIX__['"]/g, () => ' __GATSBY_RELATIVEURL_PATH_PREFIX__ ')
         // Erases "/__GATSBY_RELATIVEURL_PATH_PREFIX__", usually found in filepaths
         // Is this necessary?? .replace(/(["'])\/__GATSBY_RELATIVEURL_PATH_PREFIX__\/([^'"]*?)(['"])/g, (matches, g1, g2, g3) => ` __GATSBY_RELATIVEURL_PATH_PREFIX__ + ${g1}/${g2}${g3}`);
         .replace(/\/__GATSBY_RELATIVEURL_PATH_PREFIX__/g, () => '');
 
-        // prevents placement of header if all instances of
+        // Prevents placement of header if all instances of
         // __GATSBY_RELATIVEURL_PATH_PREFIX__ were removed in previous line
         if (contents.includes('__GATSBY_RELATIVEURL_PATH_PREFIX__')) {
             contents = `if(typeof __GATSBY_RELATIVEURL_PATH_PREFIX__ === 'undefined'){__GATSBY_RELATIVEURL_PATH_PREFIX__=''}${contents}`;
         }
-
         await writeFileAsync(path, contents);
-    }, { concurrency: TRANSFORM_CONCURRENCY });
+    }, {
+        concurrency: TRANSFORM_CONCURRENCY,
+    });
 };
-
 const relativizeMiscAssetFiles = async () => {
     // Replaces all /__GATSBY_RELATIVEURL_PATH_PREFIX__/ strings to standard relative paths
     const paths = await globby(['public/**/*', '!public/**/*.html', '!public/**/*.js']);
 
     await pMap(paths, async (path) => {
-        // Skip if this is not a text file
+    // Skip if this is not a text file
         if (!isTextPath(path)) {
             return;
         }
-
         const buffer = await readFileAsync(path);
         let contents = buffer.toString();
 
@@ -112,28 +107,34 @@ const relativizeMiscAssetFiles = async () => {
         if (!contents.includes('__GATSBY_RELATIVEURL_PATH_PREFIX__')) {
             return;
         }
+        const relativePrefix = "../"
+        // const relativePrefix = getRelativePrefix(path);
 
-        const relativePrefix = getRelativePrefix(path);
+        console.debug(`Relativizing ${path}...: `, relativePrefix);
 
-        contents = contents
-        .replace(/\/__GATSBY_RELATIVEURL_PATH_PREFIX__\//g, () => relativePrefix);
-
+        contents = contents.replace(/\/__GATSBY_RELATIVEURL_PATH_PREFIX__\//g, () => relativePrefix);
         await writeFileAsync(path, contents);
-    }, { concurrency: TRANSFORM_CONCURRENCY });
+    }, {
+        concurrency: TRANSFORM_CONCURRENCY,
+    });
 };
 
-exports.onPreBootstrap = ({ store, reporter }) => {
-    const { config, program } = store.getState();
+exports.onPreBootstrap = ({
+    store,
+    reporter,
+}) => {
+    const {
+        config,
+        program,
+    } = store.getState();
 
     if (!/\/?__GATSBY_RELATIVEURL_PATH_PREFIX__/.test(config.pathPrefix)) {
         reporter.panic('The pathPrefix must be set to __GATSBY_RELATIVEURL_PATH_PREFIX__ in your gatsby-config.js file');
     }
-
     if (program._[0] === 'build' && !program.prefixPaths) {
         reporter.panic('The build command must be run with --prefix-paths');
     }
 };
-
 exports.onPostBuild = async () => {
     // Relativize all occurrences of __GATSBY_RELATIVEURL_PATH_PREFIX__ within the built files
     await relativizeHtmlFiles();

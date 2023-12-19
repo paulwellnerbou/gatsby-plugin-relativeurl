@@ -17,13 +17,13 @@
   },
   "license": "MIT",
   "files": [
-    "index.js",
-    "gatsby-node.js",
-    "runtime"
+    "src/index.js",
+    "src/gatsby-node.js",
+    "src/runtime"
   ],
   "scripts": {
     "build": "babel src --out-dir .",
-    "postbuild": "uglifyjs runtime/head-script.js --compress --mangle -o runtime/head-script.js",
+    "postbuild": "uglifyjs src/runtime/head-script.js --compress --mangle -o runtime/head-script.js",
     "lint": "eslint . --ignore-path .gitignore",
     "prerelease": "npm run lint && npm run build",
     "release": "standard-version",
@@ -43,17 +43,18 @@
   "dependencies": {
     "globby": "^8.0.1",
     "is-text-path": "^1.0.1",
-    "p-map": "^2.0.0"
+    "p-map": "^2.0.0",
+    "@babel/runtime": "^7.7.6"
   },
   "peerDependencies": {
-    "gatsby": "^4.0.0 || ^5.0.0"
+    "gatsby": ">2.0.15"
   },
   "devDependencies": {
-    "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.1.2",
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "babel-preset-gatsby-package": "^0.2.15",
     "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^7.0.0",
-    "babel-preset-gatsby-package": "^0.1.2",
     "eslint": "^5.3.0",
     "eslint-config-moxy": "^6.0.1",
     "lint-staged": "^8.0.0",

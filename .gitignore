@@ -1,3 +1,8 @@
 node_modules/
 npm-debug.*
 coverage/
+
+# generated sources, copied by `npm run build`
+index.js
+gatsby-node.js
+runtime
